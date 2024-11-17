@@ -13,19 +13,23 @@ async function sendMessage() {
         addMessage(messageText, 'user');
         messageInput.value = '';
 
-        const response = await fetch('http://localhost:8000/chat', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ message: messageText })
-        });
+        try {
+            const response = await fetch('http://localhost:8000/chat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ message: messageText })
+            });
 
-        if (response.ok) {
-            const data = await response.json();
-            addMessage(data.response, 'bot');
-        } else {
-            addMessage('Error: No se pudo obtener una respuesta.', 'bot');
+            if (response.ok) {
+                const data = await response.json();
+                addMessage(data.response, 'bot');
+            } else {
+                addMessage('Error: No se pudo obtener una respuesta.', 'bot');
+            }
+        } catch (error) {
+            addMessage('Error: No se pudo conectar al servidor.', 'bot');
         }
     }
 }

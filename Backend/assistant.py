@@ -6,7 +6,7 @@ import faiss
 import os
 from PyPDF2 import PdfReader
 
-api_key = "yFrIll8Xpub6EPz8dchwsFPeIhL8bKyJ"
+api_key = "CACzhXlcN8uactdhsSvtOw8JUjjnavpT"
 client = MistralClient(api_key=api_key)
 
 # Ruta al archivo PDF local
