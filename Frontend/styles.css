@@ -8,12 +8,37 @@
 
 body {
     font-family: 'Roboto', sans-serif;
-    background-color: #f0f2f5;
+    background-color: var(--background-color);
+    color: var(--text-color);
     height: 100vh;
     display: flex;
     justify-content: center;
     align-items: center;
     margin: 0;
+}
+
+:root {
+    --background-color: #f5f0f0;
+    --text-color: #000000;
+    --header-background-color: #a84a4a;
+    --header-text-color: #ffffff;
+    --message-user-background-color: #fee1e1;
+    --message-bot-background-color: #f1f0f0;
+    --input-background-color: #ffffff;
+    --button-background-color: #a84a4a;
+    --button-text-color: #ffffff;
+}
+
+[data-theme="dark"] {
+    --background-color: #1e1e1e;
+    --text-color: #ffffff;
+    --header-background-color: #333333;
+    --header-text-color: #ffffff;
+    --message-user-background-color: #3a3a3a;
+    --message-bot-background-color: #2a2a2a;
+    --input-background-color: #333333;
+    --button-background-color: #555555;
+    --button-text-color: #ffffff;
 }
 
 .chatbot-container {
@@ -23,18 +48,18 @@ body {
     width: 100%;
     max-width: 100%;
     max-height: 100%;
-    background-color: #ffffff;
+    background-color: var(--input-background-color);
     border-radius: 8px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .chatbot-header {
-    background-color: #a84a4a;
-    color: #ffffff;
+    background-color: var(--header-background-color);
+    color: var(--header-text-color);
     padding: 20px;
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: space-between;
     border-top-left-radius: 8px;
     border-top-right-radius: 8px;
     width: 100%;
@@ -65,12 +90,12 @@ body {
 }
 
 .message.user {
-    background-color: #fee1e1;
+    background-color: var(--message-user-background-color);
     align-self: flex-end;
 }
 
 .message.bot {
-    background-color: #f1f0f0;
+    background-color: var(--message-bot-background-color);
 }
 
 .chatbot-input {
@@ -85,11 +110,13 @@ body {
     border: none;
     outline: none;
     border-bottom-left-radius: 8px;
+    background-color: var(--input-background-color);
+    color: var(--text-color);
 }
 
 #send-button {
-    background-color: #a84a4a;
-    color: #ffffff;
+    background-color: var(--button-background-color);
+    color: var(--button-text-color);
     border: none;
     padding: 15px;
     cursor: pointer;
@@ -98,7 +125,15 @@ body {
 }
 
 #send-button:hover {
-    background-color: #983b3b;
+    background-color: var(--button-background-color-hover);
+}
+
+#theme-toggle {
+    background: none;
+    border: none;
+    color: var(--header-text-color);
+    font-size: 1.5em;
+    cursor: pointer;
 }
 
 @keyframes fadeIn {
