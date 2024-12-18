@@ -4,7 +4,7 @@ import numpy as np
 import faiss
 import os
 
-api_key = "CACzhXlcN8uactdhsSvtOw8JUjjnavpT"
+api_key = "uzm2ETbml7L9ZxTMaiUgcQVsFjv4Dzen"
 client = MistralClient(api_key=api_key)
 
 # Función para leer el archivo PDF

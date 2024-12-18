@@ -8,7 +8,7 @@ import faiss
 import os
 from Backend.helpers import read_pdf, get_text_embedding, initialize_faiss_index
 
-api_key = "CACzhXlcN8uactdhsSvtOw8JUjjnavpT"
+api_key = "uzm2ETbml7L9ZxTMaiUgcQVsFjv4Dzen"
 client = MistralClient(api_key=api_key)
 
 app = FastAPI()
