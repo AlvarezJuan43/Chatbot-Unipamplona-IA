@@ -1,10 +1,13 @@
 from mistralai.client import MistralClient
-from langchain import PromptTemplate, LLMChain
-from langchain.llms import OpenAI
+from mistralai.models.chat_completion import ChatMessage
+from langchain_core.prompts import PromptTemplate
+from langchain.chains import LLMChain
+from langchain.llms.base import LLM
 from PyPDF2 import PdfReader
 import numpy as np
 import faiss
 import os
+from typing import Optional, List
 
 api_key = "uzm2ETbml7L9ZxTMaiUgcQVsFjv4Dzen"
 client = MistralClient(api_key=api_key)
@@ -43,6 +46,28 @@ def initialize_faiss_index(pdf_path):
         index.add(text_embeddings)
     return index, chunks
 
+class MistralLLM(LLM):
+    def __init__(self, client):
+        super().__init__()
+        self._client = client  # Usamos un atributo protegido para evitar conflictos.
+
+    @property
+    def client(self):
+        """Propiedad para exponer el cliente de forma segura."""
+        return self._client
+
+    def _call(self, prompt: str, stop: Optional[List[str]] = None) -> str:
+        if not self._client:
+            raise ValueError("El cliente de Mistral no se ha inicializado correctamente.")
+        messages = [ChatMessage(role="user", content=prompt)]
+        chat_response = self._client.chat(model="mistral-medium-latest", messages=messages)
+        return chat_response.choices[0].message.content
+
+    @property
+    def _llm_type(self) -> str:
+        return "mistral"
+
+
 # Función para crear y ejecutar una cadena LLM con LangChain utilizando Mistral
 def run_langchain_with_mistral(context, question):
     # Crear plantilla de prompt para LangChain
@@ -57,9 +82,9 @@ def run_langchain_with_mistral(context, question):
     """
     prompt = PromptTemplate(input_variables=["context", "question"], template=template)
 
-    # Crear una cadena LLM con LangChain
-    llm = OpenAI(api_key=api_key)
-    chain = LLMChain(llm=llm, prompt=prompt)
+    # Crear una cadena LLM con LangChain utilizando Mistral
+    mistral_llm = MistralLLM(client=client)
+    chain = LLMChain(llm=mistral_llm, prompt=prompt)
 
     # Ejecutar la cadena
     response = chain.run({"context": context, "question": question})
