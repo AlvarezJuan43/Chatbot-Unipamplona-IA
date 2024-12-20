@@ -1,4 +1,6 @@
 from mistralai.client import MistralClient
+from langchain import PromptTemplate, LLMChain
+from langchain.llms import OpenAI
 from PyPDF2 import PdfReader
 import numpy as np
 import faiss
@@ -40,3 +42,25 @@ def initialize_faiss_index(pdf_path):
         index = faiss.IndexFlatL2(d)
         index.add(text_embeddings)
     return index, chunks
+
+# Función para crear y ejecutar una cadena LLM con LangChain utilizando Mistral
+def run_langchain_with_mistral(context, question):
+    # Crear plantilla de prompt para LangChain
+    template = """
+    La información del contexto se encuentra a continuación.
+    ---------------------
+    {context}
+    ---------------------
+    Responda la información del contexto y no el conocimiento previo, sea lo más breve posible sin extenderse demasiado.
+    Consulta: {question}
+    Respuesta:
+    """
+    prompt = PromptTemplate(input_variables=["context", "question"], template=template)
+
+    # Crear una cadena LLM con LangChain
+    llm = OpenAI(api_key=api_key)
+    chain = LLMChain(llm=llm, prompt=prompt)
+
+    # Ejecutar la cadena
+    response = chain.run({"context": context, "question": question})
+    return response
