@@ -1,6 +1,7 @@
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+from langchain import PromptTemplate, LLMChain
 from mistralai.client import MistralClient
 from mistralai.models.chat_completion import ChatMessage
 import numpy as np
@@ -31,36 +32,42 @@ class Message(BaseModel):
 # Inicialización de la base de datos vectorial
 index, chunks = initialize_faiss_index(pdf_path)
 
+def preprocess_text(text):
+    return ' '.join(text.split())
+
+# Crear plantilla de prompt para LangChain
+template = """
+La información relevante del documento se encuentra a continuación:
+---------------------
+{context}
+---------------------
+Por favor, responda con la información relevante del documento en el formato más apropiado. Si la respuesta incluye elementos listados o enumerados, preséntelos en forma de lista.
+Consulta: {question}
+Respuesta:
+"""
+prompt = PromptTemplate(input_variables=["context", "question"], template=template)
+
 @app.post("/chat")
 async def chat(message: Message):
     user_message = message.message
 
     question_embeddings = np.array([get_text_embedding(user_message)])
-    D, I = index.search(question_embeddings, k=2)
-    retrieved_chunk = [chunks[i] for i in I.tolist()[0]]
+    D, I = index.search(question_embeddings, k=3)
+    retrieved_chunks = [chunks[i] for i in I.tolist()[0]]
     
-    prompt = f"""
-    La información del contexto se encuentra a continuación.
-    ---------------------
-    {retrieved_chunk}
-    ---------------------
-    Responda la información del documento , sea lo más breve posible sin extenderse demasiado.
-    manten una actitud de disponibilidad constante.
-    Consulta: {user_message}
-    Respuesta:
-    """
+    # Preprocesar los chunks recuperados
+    processed_chunks = [preprocess_text(chunk) for chunk in retrieved_chunks]
 
-    def run_mistral(user_message, model="mistral-medium-latest"):
-        messages = [
-            ChatMessage(role="user", content=user_message)
-        ]
-        chat_response = client.chat(
-            model=model,
-            messages=messages
-        )
+    # Crear una cadena LLM con LangChain utilizando Mistral
+    def run_mistral(prompt):
+        messages = [ChatMessage(role="user", content=prompt)]
+        chat_response = client.chat(model="mistral-medium-latest", messages=messages)
         return chat_response.choices[0].message.content
 
-    response = run_mistral(prompt)
+    # Ejecutar la cadena
+    context = ' '.join(processed_chunks)
+    response = run_mistral(prompt.format(context=context, question=user_message))
+
     return {"response": response}
 
 if __name__ == '__main__':

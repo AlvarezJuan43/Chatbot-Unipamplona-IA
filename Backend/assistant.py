@@ -1,3 +1,4 @@
+from langchain import PromptTemplate, LLMChain
 from mistralai.client import MistralClient
 from mistralai.models.chat_completion import ChatMessage
 import numpy as np
@@ -5,7 +6,7 @@ import faiss
 import os
 from PyPDF2 import PdfReader
 
-api_key = "uzm2ETbml7L9ZxTMaiUgcQVsFjv4Dzen"
+api_key = "CACzhXlcN8uactdhsSvtOw8JUjjnavpT"
 client = MistralClient(api_key=api_key)
 
 # Ruta al archivo PDF local
@@ -21,13 +22,13 @@ def read_pdf(pdf_path):
         print(f"Error: No se pudo leer el archivo PDF. {e}")
         return None
 
-# Función para obtener embeddings de texto
+# Función para obtener embeddings de texto utilizando Mistral
 def get_text_embeddings(input):
     embeddings_batch_response = client.embeddings(
         model="mistral-embed",
         input=input
     )
-    return [embedding.data[0].embedding for embedding in embeddings_batch_response]
+    return embeddings_batch_response.data[0].embedding
 
 # Función para guardar texto en un archivo de texto plano
 def save_text_to_file(text, file_path):
@@ -46,7 +47,7 @@ if text:
     chunks = [text[i:i + chunk_size] for i in range(0, len(text), chunk_size)]
 
     # Obtener embeddings de los chunks de texto en lotes
-    text_embeddings = np.array(get_text_embeddings(chunks))
+    text_embeddings = np.array([get_text_embeddings(chunk) for chunk in chunks])
 
     # Crear índice FAISS y agregar embeddings
     d = text_embeddings.shape[1]
@@ -63,28 +64,25 @@ if text:
     # Recuperar chunks relevantes
     retrieved_chunks = [chunks[i] for i in I[0]]
 
-    # Crear prompt para Mistral
-    prompt = f"""
+    # Crear plantilla de prompt para LangChain
+    template = """
     La información del contexto se encuentra a continuación.
     ---------------------
-    {' '.join(retrieved_chunks)}
+    {context}
     ---------------------
-    Responda la información del contexto y no el conocimiento previo, sea lo más breve posible sin extenderse demasiado.
+    Responda la información del contexto en el formato más apropiado. Si la respuesta incluye elementos listados o enumerados , preséntelos en forma de lista.
     Consulta: {question}
     Respuesta:
     """
+    prompt = PromptTemplate(input_variables=["context", "question"], template=template)
 
-    # Función para ejecutar Mistral
-    def run_mistral(user_message, model="mistral-medium-latest"):
-        messages = [
-            ChatMessage(role="user", content=user_message)
-        ]
-        chat_response = client.chat(
-            model=model,
-            messages=messages
-        )
+    # Crear una cadena LLM con LangChain utilizando Mistral
+    def run_mistral(prompt):
+        messages = [ChatMessage(role="user", content=prompt)]
+        chat_response = client.chat(model="mistral-medium-latest", messages=messages)
         return chat_response.choices[0].message.content
 
-    # Ejecutar Mistral con el prompt
-    response = run_mistral(prompt)
+    # Ejecutar la cadena
+    context = ' '.join(retrieved_chunks)
+    response = run_mistral(prompt.format(context=context, question=question))
     print(response)
